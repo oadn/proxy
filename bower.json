@@ -1,0 +1,27 @@
+{
+  "name": "oadn-proxy",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Agustin Moyano <agustin.moyano@gmail.com>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/oadn/proxy",
+  "moduleType": [
+    "node"
+  ],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.6",
+    "angular": "~1.4.8",
+    "angular-bootstrap": "~0.14.3",
+    "angular-ui-router": "~0.2.15"
+  }
+}

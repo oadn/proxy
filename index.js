@@ -6,9 +6,21 @@ var session = require('express-session');
 var bodyParser = require('body-parser');
 var app = express();
 
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(user, done) {
+  done(null, user);
+});
+
 app.use(session({secret: 'Goojeub2'}));
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use('/bower_components', express.static('./bower_components'));
 
 mongoose.connect('mongodb://localhost/proxy');
 var db = mongoose.connection;
@@ -18,35 +30,30 @@ db.once('open', function() {
     name: String,
     strategy: {
       name: String,
-      data: [String]
-    },
-    manual: {
-      url: String,
-      map: {
-        user: String,
-        pass: String
-      }
+      data: {}
     },
     proxies: [
       {
         url: String,
+        path: String,
         strategy: {
           name: String,
-          data: [String]
-        },
-        manual: {
-          url: String,
-          path: String,
-          map: {
-            user: String,
-            pass: String
-          }
+          data: {}
         }
       }
     ]
   });
 
-  var Client = mongoose.model('Client', ClientSchema);
+  var UserSchema = mongoose.Schema({
+    user: String,
+    pass: String,
+    admin: {type: Boolean, default: false},
+    clients: [{type: mongoose.Schema.ObjectId, ref: 'client'}]
+  });
+
+  var Client = mongoose.model('client', ClientSchema);
+
+  var User = mongoose.model('user', UserSchema);
 
   Client.find(function(err, clients) {
     clients.forEach(function(client) {
@@ -57,16 +64,18 @@ db.once('open', function() {
 
       client.proxies.forEach(function(proxy) {
 
-        router.use('/'+path, function authFn(req, res, next) {
+        if(proxy.strategy) {
+          require('./strategies/'+proxy.strategy.name)(passport, proxy, proxy.strategy, router, client.name);
+        } else {
+          require('./strategies/'+client.strategy.name)(passport, proxy, client.strategy, router, client.name);
+        }
 
-        });
-
-        router.use('/'+path, function proxyFn(req, res, next) {
-          req.pipe(request(proxy.url+req.url)).pipe(res);
-        });
-        
       });
 
     });
   });
+
+
 });
+
+app.listen(3000);
